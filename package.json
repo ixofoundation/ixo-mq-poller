@@ -1,0 +1,23 @@
+{
+  "name": "ixo-pol",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.ts",
+  "scripts": {
+    "start": "node dist/app.js",
+    "test": "we are live"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^10.1.2",
+    "amqplib": "^0.5.2",
+    "axios": "^0.18.0",
+    "dotenv": "^5.0.1",
+    "npm": "^6.0.1",
+    "to": "^0.2.9",
+    "ts-loader": "^4.3.0",
+    "typescript": "^2.8.3",
+    "update": "^0.7.4"
+  }
+}
