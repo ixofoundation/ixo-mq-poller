@@ -16,9 +16,9 @@ export class MessageQ {
     }
 
     connect(): Promise<any> {
-        var inst :any;
+        var inst: any;
         inst = this;
-        return new Promise(function (resolve: Function, reject: Function) {            
+        return new Promise(function (resolve: Function, reject: Function) {
             amqplib.connect(process.env.RABITMQ_URI || '')
                 .then((conn: any) => {
                     inst.connection = conn;
@@ -51,7 +51,7 @@ export class MessageQ {
                     }, () => {
                         return channel.nack(messageData);
                     });
-                }, { noAck: false });
+                });
             }, (error: any) => {
                 throw error;
             });
@@ -69,7 +69,10 @@ export class MessageQ {
                     console.log(new Date().getUTCMilliseconds() + ' received response from blockchain');
                     resolve(true);
                 })
-
+                .catch(() => {
+                    console.log(new Date().getUTCMilliseconds() + ' no response from blockchain');
+                    reject(false);
+                });
         });
     }
 }
