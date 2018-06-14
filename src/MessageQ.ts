@@ -66,11 +66,11 @@ export class MessageQ {
             console.log(new Date().getUTCMilliseconds() + ' consume from queue' + message);
             axios.get(BLOCKCHAIN_URI_TENDERMINT + message)
                 .then((response: any) => {
-                    console.log(new Date().getUTCMilliseconds() + ' received response from blockchain');
+                    console.log(new Date().getUTCMilliseconds() + ' received response from blockchain ' + response.data.result.hash);
                     resolve(true);
                 })
-                .catch(() => {
-                    console.log(new Date().getUTCMilliseconds() + ' no response from blockchain');
+                .catch((reason) => {
+                    console.log(new Date().getUTCMilliseconds() + ' no response from blockchain ' + reason);
                     reject(false);
                 });
         });
