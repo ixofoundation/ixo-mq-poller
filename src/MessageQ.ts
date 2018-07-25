@@ -35,7 +35,9 @@ export class MessageQ {
         try {
             const channel = await this.connection.createChannel();
             channel.assertQueue(this.queue, {
-                durable: true
+                durable: true,
+                deadLetterExchange: "pds.dlx",
+                deadLetterRoutingKey: "dlx.rk"
             }).then(() => {
                 channel.prefetch(1);
                 channel.consume(this.queue, (messageData: any) => {
