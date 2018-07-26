@@ -22,10 +22,9 @@ export class MessageQ {
             amqplib.connect(process.env.RABITMQ_URI || '')
                 .then((conn: any) => {
                     inst.connection = conn;
-                    resolve(conn);
                     console.log('RabbitMQ connected');
+                    resolve(conn);                    
                 }, () => {
-                    console.log("Could not initialize RabbitMQ Server");
                     throw new Error("Cannot connect to RabbitMQ Server");
                 });
         });
