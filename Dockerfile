@@ -3,6 +3,7 @@ FROM node:latest
 RUN mkdir /usr/src/pol
 WORKDIR /usr/src/pol
 COPY package*.json ./
+COPY dist /usr/src/pol/dist
 RUN npm install
-COPY . .
+
 CMD ["npm", "start"]

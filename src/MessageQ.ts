@@ -23,7 +23,7 @@ export class MessageQ {
                 .then((conn: any) => {
                     inst.connection = conn;
                     console.log('RabbitMQ connected');
-                    resolve(conn);                    
+                    resolve(conn);
                 }, () => {
                     throw new Error("Cannot connect to RabbitMQ Server");
                 });
@@ -33,29 +33,39 @@ export class MessageQ {
     public async subscribe() {
         try {
             const channel = await this.connection.createChannel();
+            channel.assertExchange("pds.ex", "direct", { durable: true });
+            channel.assertExchange("pds.dlx", "fanout", { durable: true });
             channel.assertQueue(this.queue, {
                 durable: true,
                 deadLetterExchange: "pds.dlx",
                 deadLetterRoutingKey: "dlx.rk"
-            }).then(() => {
-                channel.prefetch(1);
-                channel.consume(this.queue, (messageData: any) => {
+            })
+                .then(() => {
+                    channel.bindQueue(this.queue, 'pds.ex');
+                    //channel.bindQueue(this.queue, 'pds.dlx');
+                })
+                .then(() => {
+                    channel.prefetch(1);
+                    channel.consume(this.queue, (messageData: any) => {
 
-                    if (messageData === null) {
-                        return;
-                    }
+                        if (messageData === null) {
+                            return;
+                        }
 
-                    const message = JSON.parse(messageData.content.toString());
+                        const message = JSON.parse(messageData.content.toString());
 
-                    this.handleMessage(message).then(() => {
-                        return channel.ack(messageData);
-                    }, () => {
-                        return channel.nack(messageData);
+                        this.handleMessage(message)
+                            .then(() => {
+                                console.log('ACK');
+                                return channel.ack(messageData);
+                            }, () => {
+                                console.log('NACK');
+                                return channel.nack(messageData, false, false);
+                            });
                     });
+                }, (error: any) => {
+                    throw error;
                 });
-            }, (error: any) => {
-                throw error;
-            });
 
         } catch (error) {
             throw new Error(error.message);
@@ -68,11 +78,16 @@ export class MessageQ {
             axios.get(BLOCKCHAIN_URI_TENDERMINT + message)
                 .then((response: any) => {
                     console.log(new Date().getUTCMilliseconds() + ' received response from blockchain ' + response.data.result.hash);
-                    resolve(true);
+                    if (response.data.result.code == 0) {
+                        resolve(message);
+                    } else {
+                        reject(message);
+                    }
+                    
                 })
                 .catch((reason) => {
                     console.log(new Date().getUTCMilliseconds() + ' no response from blockchain ' + reason);
-                    reject(false);
+                    reject(message);
                 });
         });
     }
