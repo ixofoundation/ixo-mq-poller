@@ -42,7 +42,6 @@ export class MessageQ {
             })
                 .then(() => {
                     channel.bindQueue(this.queue, 'pds.ex');
-                    //channel.bindQueue(this.queue, 'pds.dlx');
                 })
                 .then(() => {
                     channel.prefetch(1);
@@ -55,11 +54,14 @@ export class MessageQ {
                         const message = JSON.parse(messageData.content.toString());
 
                         this.handleMessage(message)
-                            .then(() => {
+                            .then((response) => {
+                                if (response.data.result.code != 0) {
+                                    channel.sendToQueue('pds.dlq', Buffer.from(JSON.stringify(response.data.result)));
+                                }
                                 console.log('ACK');
-                                return channel.ack(messageData);
+                                return channel.ack(messageData);                                
                             }, () => {
-                                console.log('NACK');
+                                console.log('NACK ' + JSON.stringify(messageData));
                                 return channel.nack(messageData, false, false);
                             });
                     });
@@ -78,12 +80,12 @@ export class MessageQ {
             axios.get(BLOCKCHAIN_URI_TENDERMINT + message)
                 .then((response: any) => {
                     console.log(new Date().getUTCMilliseconds() + ' received response from blockchain ' + response.data.result.hash);
-                    if (response.data.result.code == 0) {
-                        resolve(message);
-                    } else {
-                        reject(message);
-                    }
-                    
+                    // if (response.data.result.code == 0) {
+                    //     resolve(message);
+                    // } else {
+                    //     reject(response.data.result);
+                    // }
+                    resolve(response);
                 })
                 .catch((reason) => {
                     console.log(new Date().getUTCMilliseconds() + ' no response from blockchain ' + reason);
