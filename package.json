@@ -5,6 +5,7 @@
   "main": "app.ts",
   "scripts": {
     "start": "node dist/app.js",
+    "build": "tsc",
     "test": "we are live"
   },
   "author": "",

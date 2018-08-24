@@ -12,7 +12,7 @@ node {
     stage('Build source') {
         /* Let's make sure we have the repository cloned to our workspace */
         sh 'npm install'
-        sh '/node_modules/typescript/bin/tsc'
+        sh 'npm run build'
     }
 
     stage('Build image') {
