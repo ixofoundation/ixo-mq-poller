@@ -4,6 +4,7 @@ var amqplib = require('amqplib');
 
 
 const BLOCKCHAIN_URI_TENDERMINT = (process.env.BLOCKCHAIN_URI_TENDERMINT || '');
+const ETHEREUM_API = (process.env.ETHEREUM_API || 'https://mainnet.infura.io/');
 
 export class MessageQ {
 
@@ -55,11 +56,16 @@ export class MessageQ {
 
                         this.handleMessage(message)
                             .then((response) => {
-                                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(response.data.result)));
+                                let msgResponse = {
+                                    msgType: message.msgType,
+                                    projectDid: message.projectDid,
+                                    data: response.data.result
+                                }
+                                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)));
                                 console.log('ACK');
-                                return channel.ack(messageData);                                
+                                return channel.ack(messageData);
                             }, (error) => {
-                                channel.sendToQueue('pds.res', Buffer.from("Exception encountered processing blockchain request"));
+                                channel.sendToQueue('pds.res', Buffer.from("Exception encountered processing message request"));
                                 console.log('NACK');
                                 return channel.nack(messageData, false, false);
                             });
@@ -75,16 +81,33 @@ export class MessageQ {
 
     private handleMessage(message: any): Promise<any> {
         return new Promise((resolve: Function, reject: Function) => {
-            console.log(new Date().getUTCMilliseconds() + ' consume from queue' + message);
-            axios.get(BLOCKCHAIN_URI_TENDERMINT + message)
-                .then((response: any) => {
-                    console.log(new Date().getUTCMilliseconds() + ' received response from blockchain ' + response.data.result.hash);
-                    resolve(response);
+            console.log(new Date().getUTCMilliseconds() + ' consume from queue' + JSON.stringify(message));
+            if (message.msgType === 'eth') {
+                axios({
+                    method: 'post',
+                    url: ETHEREUM_API,
+                    data: { jsonrpc: "2.0", method: "eth_getTransactionByHash", params: ["0xbb3a336e3f823ec18197f1e13ee875700f08f03e2cab75f0d0b118dabb44cba0"], id: 1 }
                 })
-                .catch((reason) => {
-                    console.log(new Date().getUTCMilliseconds() + ' no response from blockchain ' + reason);
-                    reject(reason);
-                });
+                    .then((response: any) => {
+                        console.log(new Date().getUTCMilliseconds() + ' received response from ethereum ' + response.data.result.hash);
+                        resolve(response);
+                    })
+                    .catch((reason) => {
+                        console.log(new Date().getUTCMilliseconds() + ' no response from ethereum ' + reason);
+                        reject(reason);
+                    });
+
+            } else {
+                axios.get(BLOCKCHAIN_URI_TENDERMINT + message.data)
+                    .then((response: any) => {
+                        console.log(new Date().getUTCMilliseconds() + ' received response from blockchain ' + response.data.result.hash);
+                        resolve(response);
+                    })
+                    .catch((reason) => {
+                        console.log(new Date().getUTCMilliseconds() + ' no response from blockchain ' + reason);
+                        reject(reason);
+                    });
+            }
         });
     }
 }
