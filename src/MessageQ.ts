@@ -46,7 +46,7 @@ export class MessageQ {
                     channel.bindQueue(this.queue, 'pds.ex');
                 })
                 .then(() => {
-                    channel.prefetch(50);
+                    channel.prefetch(1);
                     channel.consume(this.queue, (messageData: any) => {
 
                         if (messageData === null) {
