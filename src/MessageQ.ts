@@ -3,7 +3,8 @@ import axios from 'axios';
 var amqplib = require('amqplib');
 var dateFormat = require('dateformat');
 
-const BLOCKCHAIN_URI_TENDERMINT = (process.env.BLOCKCHAIN_URI_TENDERMINT || '');
+const BLOCKCHAIN_URI_SYNC = (process.env.BLOCKCHAIN_URI_SYNC || '');
+const BLOCKCHAIN_URI_COMMIT = (process.env.BLOCKCHAIN_URI_COMMIT || '');
 const ETHEREUM_API = (process.env.ETHEREUM_API || 'https://mainnet.infura.io/');
 
 export class MessageQ {
@@ -104,7 +105,8 @@ export class MessageQ {
                     });
 
             } else {
-                axios.get(BLOCKCHAIN_URI_TENDERMINT + message.data)
+                let blockchainUrl = message.commit ? BLOCKCHAIN_URI_COMMIT : BLOCKCHAIN_URI_SYNC
+                axios.get(blockchainUrl + message.data)
                     .then((response: any) => {
                         console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
                         resolve(response);
