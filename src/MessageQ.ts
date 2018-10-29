@@ -60,7 +60,6 @@ export class MessageQ {
                             .then((response) => {
                                 let msgResponse = {
                                     msgType: message.data.msgType,
-                                    request: message.request,
                                     txHash: message.txHash,
                                     data: response.data.result
                                 }
