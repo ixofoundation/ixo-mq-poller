@@ -41,7 +41,7 @@ export class MessageQ {
             const channel = await this.connection.createChannel();
             channel.assertExchange("pds.ex", "direct", { durable: true });
             channel.assertQueue(this.queue, {
-                durable: true 
+                durable: true
             })
                 .then(() => {
                     channel.bindQueue(this.queue, 'pds.ex');
@@ -56,11 +56,11 @@ export class MessageQ {
 
                         const message = JSON.parse(messageData.content.toString());
 
-                        this.handleMessage(message)
+                        this.handleMessage(message.data)
                             .then((response) => {
                                 let msgResponse = {
-                                    msgType: message.msgType,
-                                    projectDid: message.projectDid,
+                                    msgType: message.data.msgType,
+                                    txHash: message.txHash,
                                     data: response.data.result
                                 }
                                 channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)), {
@@ -105,7 +105,7 @@ export class MessageQ {
                     });
 
             } else {
-                let blockchainUrl = message.commit ? BLOCKCHAIN_URI_COMMIT : BLOCKCHAIN_URI_SYNC
+                let blockchainUrl = message.commit ? BLOCKCHAIN_URI_COMMIT : BLOCKCHAIN_URI_SYNC;
                 axios.get(blockchainUrl + message.data)
                     .then((response: any) => {
                         console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
