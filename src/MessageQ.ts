@@ -5,6 +5,7 @@ var dateFormat = require('dateformat');
 
 const BLOCKCHAIN_URI_SYNC = (process.env.BLOCKCHAIN_URI_SYNC || '');
 const BLOCKCHAIN_URI_COMMIT = (process.env.BLOCKCHAIN_URI_COMMIT || '');
+const BLOCKCHAIN_URI_VALIDATE = (process.env.BLOCKCHAIN_URI_VALIDATE || '');
 const ETHEREUM_API = (process.env.ETHEREUM_API || 'https://mainnet.infura.io/');
 
 export class MessageQ {
@@ -12,6 +13,12 @@ export class MessageQ {
     connection: any;
 
     private queue: string;
+
+    private lookupBlockChainURI: any = {
+        'SYNC': BLOCKCHAIN_URI_SYNC,
+        'COMMIT': BLOCKCHAIN_URI_COMMIT,
+        'VALIDATE': BLOCKCHAIN_URI_VALIDATE
+    }
 
     constructor(queue: string) {
         this.queue = queue;
@@ -105,7 +112,8 @@ export class MessageQ {
                     });
 
             } else {
-                let blockchainUrl = message.commit ? BLOCKCHAIN_URI_COMMIT : BLOCKCHAIN_URI_SYNC;
+                let blockchainUrl = this.lookupBlockChainURI[message.uri];
+                //let blockchainUrl = message.commit ? BLOCKCHAIN_URI_COMMIT : BLOCKCHAIN_URI_SYNC;
                 axios.get(blockchainUrl + message.data)
                     .then((response: any) => {
                         console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
