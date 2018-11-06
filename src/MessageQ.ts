@@ -113,7 +113,6 @@ export class MessageQ {
 
             } else {
                 let blockchainUrl = this.lookupBlockChainURI[message.uri];
-                //let blockchainUrl = message.commit ? BLOCKCHAIN_URI_COMMIT : BLOCKCHAIN_URI_SYNC;
                 axios.get(blockchainUrl + message.data)
                     .then((response: any) => {
                         console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
