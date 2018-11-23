@@ -70,17 +70,18 @@ export class MessageQ {
                                     txHash: message.txHash,
                                     data: response.data.result
                                 }
+                                console.log(this.dateTimeLogger() + ' return blockchain response message ' + message.txHash);
                                 channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)), {
                                     persistent: false,
                                     contentType: 'application/json'
                                 });
                                 return channel.ack(messageData);
                             }, (error) => {
-                                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify({ msgType: "error", data: error })), {
+                                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify({ msgType: "error", data: error, txHash: message.txHash})), {
                                     persistent: false,
                                     contentType: 'application/json'
                                 });
-                                return channel.nack(messageData, true, true);
+                                return channel.ack(messageData);
                             });
                     });
                 }, (error: any) => {
