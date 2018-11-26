@@ -1,9 +1,12 @@
 import axios from 'axios';
 
 var amqplib = require('amqplib');
+var dateFormat = require('dateformat');
 
-
-const BLOCKCHAIN_URI_TENDERMINT = (process.env.BLOCKCHAIN_URI_TENDERMINT || '');
+const BLOCKCHAIN_URI_SYNC = (process.env.BLOCKCHAIN_URI_SYNC || '');
+const BLOCKCHAIN_URI_COMMIT = (process.env.BLOCKCHAIN_URI_COMMIT || '');
+const BLOCKCHAIN_URI_VALIDATE = (process.env.BLOCKCHAIN_URI_VALIDATE || '');
+const ETHEREUM_API = (process.env.ETHEREUM_API || 'https://mainnet.infura.io/');
 
 export class MessageQ {
 
@@ -11,8 +14,18 @@ export class MessageQ {
 
     private queue: string;
 
+    private lookupBlockChainURI: any = {
+        'SYNC': BLOCKCHAIN_URI_SYNC,
+        'COMMIT': BLOCKCHAIN_URI_COMMIT,
+        'VALIDATE': BLOCKCHAIN_URI_VALIDATE
+    }
+
     constructor(queue: string) {
         this.queue = queue;
+    }
+
+    dateTimeLogger(): string {
+        return dateFormat(new Date(), "yyyy-mm-dd hh:mm:ss:l");
     }
 
     connect(): Promise<any> {
@@ -22,7 +35,7 @@ export class MessageQ {
             amqplib.connect(process.env.RABITMQ_URI || '')
                 .then((conn: any) => {
                     inst.connection = conn;
-                    console.log('RabbitMQ connected');
+                    console.log(inst.dateTimeLogger() + ' RabbitMQ connected');
                     resolve(conn);
                 }, () => {
                     throw new Error("Cannot connect to RabbitMQ Server");
@@ -34,18 +47,14 @@ export class MessageQ {
         try {
             const channel = await this.connection.createChannel();
             channel.assertExchange("pds.ex", "direct", { durable: true });
-            channel.assertExchange("pds.dlx", "fanout", { durable: true });
             channel.assertQueue(this.queue, {
-                durable: true,
-                deadLetterExchange: "pds.dlx",
-                deadLetterRoutingKey: "dlx.rk"
+                durable: true
             })
                 .then(() => {
                     channel.bindQueue(this.queue, 'pds.ex');
-                    //channel.bindQueue(this.queue, 'pds.dlx');
                 })
                 .then(() => {
-                    channel.prefetch(1);
+                    channel.prefetch(50);
                     channel.consume(this.queue, (messageData: any) => {
 
                         if (messageData === null) {
@@ -54,13 +63,25 @@ export class MessageQ {
 
                         const message = JSON.parse(messageData.content.toString());
 
-                        this.handleMessage(message)
-                            .then(() => {
-                                console.log('ACK');
+                        this.handleMessage(message.data)
+                            .then((response) => {
+                                let msgResponse = {
+                                    msgType: message.data.msgType,
+                                    txHash: message.txHash,
+                                    data: response.data.result
+                                }
+                                console.log(this.dateTimeLogger() + ' return blockchain response message ' + message.txHash);
+                                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)), {
+                                    persistent: false,
+                                    contentType: 'application/json'
+                                });
                                 return channel.ack(messageData);
-                            }, () => {
-                                console.log('NACK');
-                                return channel.nack(messageData, false, false);
+                            }, (error) => {
+                                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify({ msgType: "error", data: error, txHash: message.txHash})), {
+                                    persistent: false,
+                                    contentType: 'application/json'
+                                });
+                                return channel.ack(messageData);
                             });
                     });
                 }, (error: any) => {
@@ -74,21 +95,35 @@ export class MessageQ {
 
     private handleMessage(message: any): Promise<any> {
         return new Promise((resolve: Function, reject: Function) => {
-            console.log(new Date().getUTCMilliseconds() + ' consume from queue' + message);
-            axios.get(BLOCKCHAIN_URI_TENDERMINT + message)
-                .then((response: any) => {
-                    console.log(new Date().getUTCMilliseconds() + ' received response from blockchain ' + response.data.result.hash);
-                    if (response.data.result.code == 0) {
-                        resolve(message);
-                    } else {
-                        reject(message);
-                    }
-                    
+            console.log(this.dateTimeLogger() + ' consume from queue' + JSON.stringify(message));
+            if (message.msgType === 'eth') {
+                let txnId = message.data
+                axios({
+                    method: 'post',
+                    url: ETHEREUM_API,
+                    data: { jsonrpc: "2.0", method: "eth_getTransactionByHash", params: [txnId], id: 1 }
                 })
-                .catch((reason) => {
-                    console.log(new Date().getUTCMilliseconds() + ' no response from blockchain ' + reason);
-                    reject(message);
-                });
+                    .then((response: any) => {
+                        console.log(this.dateTimeLogger() + ' received response from ethereum ' + response.data.result.hash);
+                        resolve(response);
+                    })
+                    .catch((reason) => {
+                        console.log(this.dateTimeLogger() + ' no response from ethereum ' + reason);
+                        reject(reason);
+                    });
+
+            } else {
+                let blockchainUrl = this.lookupBlockChainURI[message.uri];
+                axios.get(blockchainUrl + message.data)
+                    .then((response: any) => {
+                        console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
+                        resolve(response);
+                    })
+                    .catch((reason) => {
+                        console.log(this.dateTimeLogger() + ' no response from blockchain ' + reason);
+                        reject(reason);
+                    });
+            }
         });
     }
 }
