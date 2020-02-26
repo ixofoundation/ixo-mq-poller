@@ -104,7 +104,7 @@ export class MessageQ {
                     data: { jsonrpc: "2.0", method: "eth_getTransactionByHash", params: [txnId], id: 1 }
                 })
                     .then((response: any) => {
-                        console.log(this.dateTimeLogger() + ' received response from ethereum ' + response.data.result.hash);
+                        console.log(this.dateTimeLogger() + ' received response from ethereum ' + response.result.hash);
                         resolve(response);
                     })
                     .catch((reason) => {
@@ -116,7 +116,7 @@ export class MessageQ {
                 let blockchainUrl = this.lookupBlockChainURI[message.uri];
                 axios.get(blockchainUrl + message.data)
                     .then((response: any) => {
-                        console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
+                        console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.result.hash);
                         resolve(response);
                     })
                     .catch((reason) => {
