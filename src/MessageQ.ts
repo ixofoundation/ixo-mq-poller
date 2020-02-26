@@ -68,7 +68,7 @@ export class MessageQ {
                                 let msgResponse = {
                                     msgType: message.data.msgType,
                                     txHash: message.txHash,
-                                    data: response.data.result
+                                    data: response.result
                                 }
                                 console.log(this.dateTimeLogger() + ' return blockchain response message ' + message.txHash);
                                 channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)), {
