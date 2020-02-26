@@ -116,10 +116,13 @@ export class MessageQ {
                 let blockchainUrl = this.lookupBlockChainURI[message.uri];
                 axios.get(blockchainUrl + message.data)
                     .then((response: any) => {
-                        console.log(response);
-                        console.log(this.dateTimeLogger() + ' received response from blockchain ' + JSON.stringify(response));
-                        console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.result.hash);
-                        resolve(response);
+                        if (response.data && response.data.result){
+                            console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
+                            resolve(response.data);
+                        }else{ 
+                            console.log(this.dateTimeLogger() + ' received error response from blockchain ' + JSON.stringify(response.data));
+                            reject(response.data.error.data || "Unknown error");
+                        }
                     })
                     .catch((reason: string) => {
                         console.log(this.dateTimeLogger() + ' no response from blockchain ' + reason);
