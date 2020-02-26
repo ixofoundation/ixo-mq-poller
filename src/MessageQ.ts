@@ -107,7 +107,7 @@ export class MessageQ {
                         console.log(this.dateTimeLogger() + ' received response from ethereum ' + response.result.hash);
                         resolve(response);
                     })
-                    .catch((reason) => {
+                    .catch((reason: string) => {
                         console.log(this.dateTimeLogger() + ' no response from ethereum ' + reason);
                         reject(reason);
                     });
@@ -116,10 +116,12 @@ export class MessageQ {
                 let blockchainUrl = this.lookupBlockChainURI[message.uri];
                 axios.get(blockchainUrl + message.data)
                     .then((response: any) => {
+                        console.log(response);
+                        console.log(this.dateTimeLogger() + ' received response from blockchain ' + JSON.stringify(response));
                         console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.result.hash);
                         resolve(response);
                     })
-                    .catch((reason) => {
+                    .catch((reason: string) => {
                         console.log(this.dateTimeLogger() + ' no response from blockchain ' + reason);
                         reject(reason);
                     });
