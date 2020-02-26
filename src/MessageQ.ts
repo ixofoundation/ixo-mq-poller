@@ -114,8 +114,9 @@ export class MessageQ {
 
             } else {
                 let blockchainUrl = this.lookupBlockChainURI[message.uri];
-                axios.get(blockchainUrl + message.data)
-                    .then((response: any) => {
+                axios.get(blockchainUrl + message.data, {
+                    timeout: 10000
+                  }).then((response: any) => {
                         if (response.data && response.data.result){
                             console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
                             resolve(response.data);
