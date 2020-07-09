@@ -3,21 +3,12 @@ import axios from 'axios';
 const amqplib = require('amqplib');
 const dateFormat = require('dateformat');
 
-const BLOCKCHAIN_URI_SYNC = (process.env.BLOCKCHAIN_URI_SYNC || '');
-const BLOCKCHAIN_URI_COMMIT = (process.env.BLOCKCHAIN_URI_COMMIT || '');
-const BLOCKCHAIN_URI_VALIDATE = (process.env.BLOCKCHAIN_URI_VALIDATE || '');
-const ETHEREUM_API = (process.env.ETHEREUM_API || 'https://mainnet.infura.io/');
+const BLOCKCHAIN_REST = (process.env.BLOCKCHAIN_REST || '');
 
 export class MessageQ {
 
   connection: any;
   private queue: string;
-
-  private readonly lookupBlockChainURI: any = {
-    'SYNC': BLOCKCHAIN_URI_SYNC,
-    'COMMIT': BLOCKCHAIN_URI_COMMIT,
-    'VALIDATE': BLOCKCHAIN_URI_VALIDATE
-  }
 
   constructor(queue: string) {
     this.queue = queue;
@@ -66,7 +57,7 @@ export class MessageQ {
                 const msgResponse = {
                   msgType: message.data.msgType,
                   txHash: message.txHash,
-                  data: response.result
+                  data: response
                 };
                 console.log(this.dateTimeLogger() + ' return blockchain response message ' + message.txHash);
                 channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)), {
@@ -99,32 +90,18 @@ export class MessageQ {
     return new Promise((resolve: Function, reject: Function) => {
       console.log(this.dateTimeLogger() + ' consume from queue ' + JSON.stringify(message));
       if (message.msgType === 'eth') {
-        let txnId = message.data
-        axios({
-          method: 'post',
-          url: ETHEREUM_API,
-          data: {jsonrpc: "2.0", method: "eth_getTransactionByHash", params: [txnId], id: 1}
-        })
-          .then((response: any) => {
-            console.log(this.dateTimeLogger() + ' received response from ethereum ' + response.data.result.hash);
-            resolve(response);
-          })
-          .catch((reason) => {
-            console.log(this.dateTimeLogger() + ' no response from ethereum ' + reason);
-            reject(reason);
-          });
-
+        console.log(this.dateTimeLogger() + ' skipping eth message')
       } else {
-        let blockchainUrl = this.lookupBlockChainURI[message.uri];
-        console.log(this.dateTimeLogger() + ' sending message to ' + blockchainUrl);
-        axios.get(blockchainUrl + message.data)
+        const broadcastUrl = BLOCKCHAIN_REST + "/txs"
+        console.log(this.dateTimeLogger() + ' sending message to ' + broadcastUrl);
+        axios.post(broadcastUrl, message.data)
           .then((response: any) => {
-            if (response.data && response.data.result) {
-              console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.result.hash);
-              resolve(response.data);
-            } else {
+            if (response.data && response.data.error) {
               console.log(this.dateTimeLogger() + ' received error response from blockchain ' + JSON.stringify(response.data));
               reject(response.data.error.data || "Unknown error");
+            } else {
+              console.log(this.dateTimeLogger() + ' received response from blockchain ' + response.data.txhash);
+              resolve(response.data);
             }
           })
           .catch((reason) => {
