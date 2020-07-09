@@ -1,9 +1,15 @@
-# create a file named Dockerfile
-FROM node:latest
+FROM node:12
+
+# Create app directory
 RUN mkdir /usr/src/pol
 WORKDIR /usr/src/pol
+
+# Copy files
 COPY package*.json ./
 COPY dist ./dist
+
+# Install app dependencies
 RUN npm install
 
-CMD ["npm", "start"]
+# Start
+CMD [ "npm", "start" ]
