@@ -45,13 +45,10 @@ export class MessageQ {
         .then(() => {
           channel.prefetch(50);
           channel.consume(this.queue, (messageData: any) => {
-
             if (messageData === null) {
               return;
             }
-
             const message = JSON.parse(messageData.content.toString());
-
             this.handleMessage(message.data)
               .then((response) => {
                 const msgResponse = {
