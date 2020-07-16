@@ -1,16 +1,11 @@
 require('dotenv').config();
 import mq from './MessageQ';
 
-mq.connect()
-  .then((conn: any) => {
-    setInterval(
-      () => {
-        mq.subscribe()
-      },
-      parseInt(process.env.pollTimer || '3000')
-    );
-  }).catch(() => {
-});
+try {
+  mq.start()
+} catch (err) {
+  console.log('Error ' + err)
+}
 
 process.on('SIGTERM', function () {
   console.log('Shut down');
