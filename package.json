@@ -1,6 +1,6 @@
 {
   "name": "ixo-pol",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "ixo service that broadcasts transactions to the ixo blockchain",
   "repository": "https://github.com/ixofoundation/ixo-mq-poller",
   "main": "app.ts",
