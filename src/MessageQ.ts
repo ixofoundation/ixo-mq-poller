@@ -32,55 +32,60 @@ export class MessageQ {
     });
   }
 
-  public async subscribe() {
-    try {
-      const channel = await this.connection.createChannel();
-      channel.assertExchange("pds.ex", "direct", {durable: true});
-      channel.assertQueue(this.queue, {
-        durable: true
-      })
-        .then(() => {
-          channel.bindQueue(this.queue, 'pds.ex');
+  public subscribe(): Promise<any> {
+    const inst = this;
+    return new Promise(async function (resolve: Function, reject: Function) {
+      try {
+        const channel = await inst.connection.createChannel();
+        channel.assertExchange("pds.ex", "direct", {durable: true});
+        channel.assertQueue(inst.queue, {
+          durable: true
         })
-        .then(() => {
-          channel.prefetch(50);
-          channel.consume(this.queue, (messageData: any) => {
-            if (messageData === null) {
-              return;
-            }
-            const message = JSON.parse(messageData.content.toString());
-            this.handleMessage(message.data)
-              .then((response) => {
-                const msgResponse = {
-                  msgType: message.data.msgType,
-                  txHash: message.txHash,
-                  data: response
-                };
-                console.log(this.dateTimeLogger() + ' return blockchain response message ' + message.txHash);
-                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)), {
-                  persistent: false,
-                  contentType: 'application/json'
+          .then(() => {
+            channel.bindQueue(inst.queue, 'pds.ex');
+          })
+          .then(() => {
+            channel.prefetch(50);
+            channel.consume(inst.queue, (messageData: any) => {
+              if (messageData === null) {
+                return;
+              }
+              const message = JSON.parse(messageData.content.toString());
+              inst.handleMessage(message.data)
+                .then((response) => {
+                  const msgResponse = {
+                    msgType: message.data.msgType,
+                    txHash: message.txHash,
+                    data: response
+                  };
+                  console.log(inst.dateTimeLogger() + ' return blockchain response message ' + message.txHash);
+                  channel.sendToQueue('pds.res', Buffer.from(JSON.stringify(msgResponse)), {
+                    persistent: false,
+                    contentType: 'application/json'
+                  });
+                  return channel.ack(messageData);
+                }, (error) => {
+                  channel.sendToQueue('pds.res', Buffer.from(JSON.stringify({
+                    msgType: "error",
+                    data: error,
+                    txHash: message.txHash
+                  })), {
+                    persistent: false,
+                    contentType: 'application/json'
+                  });
+                  return channel.ack(messageData);
                 });
-                return channel.ack(messageData);
-              }, (error) => {
-                channel.sendToQueue('pds.res', Buffer.from(JSON.stringify({
-                  msgType: "error",
-                  data: error,
-                  txHash: message.txHash
-                })), {
-                  persistent: false,
-                  contentType: 'application/json'
-                });
-                return channel.ack(messageData);
-              });
-          });
-        }, (error: any) => {
-          throw error;
-        });
-
-    } catch (error) {
-      throw new Error(error.message);
-    }
+            }).then(() => {
+              channel.close();
+            });
+          }, (error: any) => {
+            channel.close();
+            reject(error);
+          })
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    })
   }
 
   private handleMessage(message: any): Promise<any> {
