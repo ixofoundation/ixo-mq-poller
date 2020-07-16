@@ -4,7 +4,9 @@ import mq from './MessageQ';
 mq.connect()
   .then((conn: any) => {
     setInterval(
-      mq.subscribe,
+      () => {
+        mq.subscribe()
+      },
       parseInt(process.env.pollTimer || '3000')
     );
   }).catch(() => {
