@@ -1,5 +1,6 @@
 import axios from "axios";
 import { BroadcastMode } from "./codec/external/cosmos/tx/v1beta1/service";
+import { Tx } from "./codec/external/cosmos/tx/v1beta1/tx";
 import * as transactions from "./protoquery/transactions";
 import { JsonToArray } from "./protoquery/utils";
 
@@ -100,10 +101,12 @@ export class MessageQ {
         console.log(
           this.dateTimeLogger() + " sending message to " + broadcastUrl
         );
+        console.log("[POLTEST]- ", JSON.parse(message.data));
+        const parsed = JSON.parse(message.data);
         transactions
           .ServiceBroadcastTx(
-            JsonToArray(message.data),
-            BroadcastMode.BROADCAST_MODE_UNSPECIFIED
+            JsonToArray(parsed),
+            BroadcastMode.BROADCAST_MODE_ASYNC
           )
           .then((response) => {
             console.log(response);
