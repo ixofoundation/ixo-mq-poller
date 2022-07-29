@@ -91,6 +91,20 @@ export class MessageQ {
   }
 
   private handleMessage(message: any): Promise<any> {
+    interface messageData {
+      tx: {
+        msg: {
+          type: string;
+          value: {
+            data: any;
+            txHash: string;
+            senderDid: string;
+            projectDid: string;
+            pubKey: string;
+          };
+        };
+      };
+    }
     return new Promise(async (resolve: Function, reject: Function) => {
       console.log(
         this.dateTimeLogger() + " consume from queue " + JSON.stringify(message)
@@ -99,63 +113,66 @@ export class MessageQ {
       console.log(
         this.dateTimeLogger() + " sending message to " + broadcastUrl
       );
-      const parsed = JSON.parse(message.data);
+      const parsed: messageData = JSON.parse(message.data);
 
       console.log("[POLTEST MSG]- ", parsed.tx.msg);
-      console.log("[POLTEST DATA]- ", parsed.tx.msg.data);
+      console.log("[POLTEST DATA]- ", JsonToArray(parsed.tx.msg.value.data));
 
       // const rsp = await transactions.ServiceBroadcastTx(
       //   JsonToArray(parsed),
       //   BroadcastMode.BROADCAST_MODE_ASYNC
       // );
 
-      // switch (message.msgType) {
-      //   case "project/CreateProject":
-      //     {
-      //       const parsed = JSON.parse(message.data);
-      //       projects.TransactionCreateProject(
-      //         txHash,
-      //         senderDid,
-      //         projectDid,
-      //         pubKey,
-      //         parsed
-      //       );
-      //     }
-      //     break;
-      //   // case "project/CreateClaim":
-      //   //   {
-      //   //     projects.TransactionCreateProject();
-      //   //   }
-      //   //   break;
-      //   // case "project/CreateAgent":
-      //   //   {
-      //   //     projects.TransactionCreateProject();
-      //   //   }
-      //   //   break;
-      //   // case "project/CreateEvaluation":
-      //   //   {
-      //   //     projects.TransactionCreateProject();
-      //   //   }
-      //   //   break;
-      //   // case "project/UpdateAgent":
-      //   //   {
-      //   //     projects.TransactionCreateProject();
-      //   //   }
-      //   //   break;
-      //   // case "project/UpdateProjectDoc":
-      //   //   {
-      //   //     projects.TransactionCreateProject();
-      //   //   }
-      //   //   break;
-      //   // case "project/UpdateProjectStatus":
-      //   //   {
-      //   //     projects.TransactionCreateProject();
-      //   //   }
-      //   //   break;
+      switch (message.msgType) {
+        case "project/CreateProject":
+          {
+            projects
+              .TransactionCreateProject(
+                parsed.tx.msg.value.txHash,
+                parsed.tx.msg.value.senderDid,
+                parsed.tx.msg.value.projectDid,
+                parsed.tx.msg.value.pubKey,
+                JsonToArray(parsed.tx.msg.value.data)
+              )
+              .then((rsp) => {
+                console.log("[CREATE_PROJECT_RSP] ", rsp);
+              });
+          }
+          break;
+        // case "project/CreateClaim":
+        //   {
+        //     projects.TransactionCreateProject();
+        //   }
+        //   break;
+        // case "project/CreateAgent":
+        //   {
+        //     projects.TransactionCreateProject();
+        //   }
+        //   break;
+        // case "project/CreateEvaluation":
+        //   {
+        //     projects.TransactionCreateProject();
+        //   }
+        //   break;
+        // case "project/UpdateAgent":
+        //   {
+        //     projects.TransactionCreateProject();
+        //   }
+        //   break;
+        // case "project/UpdateProjectDoc":
+        //   {
+        //     projects.TransactionCreateProject();
+        //   }
+        //   break;
+        // case "project/UpdateProjectStatus":
+        //   {
+        //     projects.TransactionCreateProject();
+        //   }
+        //   break;
 
-      //   default:
-      //     break;
-      // }
+        default:
+          break;
+      }
     });
   }
 }
