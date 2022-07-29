@@ -117,8 +117,11 @@ export class MessageQ {
       );
       const parsed: messageData = JSON.parse(message.data);
 
-      console.log("[POLTEST MSG]- ", parsed.tx.msg);
-      console.log("[POLTEST DATA]- ", JsonToArray(parsed.tx.msg[0].value.data));
+      console.log("[POLTEST MSG]- ", parsed.tx.msg[0].value.data);
+      console.log(
+        "[POLTEST DATA]- ",
+        JsonToArray(JSON.stringify(parsed.tx.msg[0].value.data))
+      );
 
       // const rsp = await transactions.ServiceBroadcastTx(
       //   JsonToArray(parsed),
@@ -134,7 +137,7 @@ export class MessageQ {
                 parsed.tx.msg[0].value.senderDid,
                 parsed.tx.msg[0].value.projectDid,
                 parsed.tx.msg[0].value.pubKey,
-                JsonToArray(parsed.tx.msg[0].value.data)
+                JsonToArray(JSON.stringify(parsed.tx.msg[0].value.data))
               )
               .then((rsp) => {
                 console.log("[CREATE_PROJECT_RSP] ", rsp);
