@@ -120,7 +120,7 @@ export class MessageQ {
       console.log("[POLTEST MSG]- ", parsed.tx.msg[0].value.data);
       console.log(
         "[POLTEST DATA]- ",
-        JsonToArray(JSON.stringify(parsed.tx.msg[0].value.data))
+        JsonToArray(JSON.parse(parsed.tx.msg[0].value.data))
       );
 
       // const rsp = await transactions.ServiceBroadcastTx(
@@ -131,13 +131,20 @@ export class MessageQ {
       switch (message.msgType) {
         case "project/CreateProject":
           {
+            console.log("[PROJECT CREATE]", {
+              tx: parsed.tx.msg[0].value.txHash,
+              senddid: parsed.tx.msg[0].value.senderDid,
+              proj: parsed.tx.msg[0].value.projectDid,
+              pub: parsed.tx.msg[0].value.pubKey,
+              data: JsonToArray(JSON.parse(parsed.tx.msg[0].value.data)),
+            });
             projects
               .TransactionCreateProject(
                 parsed.tx.msg[0].value.txHash,
                 parsed.tx.msg[0].value.senderDid,
                 parsed.tx.msg[0].value.projectDid,
                 parsed.tx.msg[0].value.pubKey,
-                JsonToArray(JSON.stringify(parsed.tx.msg[0].value.data))
+                JsonToArray(JSON.parse(parsed.tx.msg[0].value.data))
               )
               .then((rsp) => {
                 console.log("[CREATE_PROJECT_RSP] ", rsp);
