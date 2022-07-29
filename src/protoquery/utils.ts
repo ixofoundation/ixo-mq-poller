@@ -42,7 +42,7 @@ export async function parseTx(tx: string, registry: Registry): Promise<any> {
 }
 
 // JSON to Uint8Array parsing and visa versa
-export const JsonToArray = function (json) {
+export const JsonToArray = function (json: string) {
   const ret = new Uint8Array(Buffer.from(json));
   return ret;
 };
