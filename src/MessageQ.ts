@@ -99,11 +99,11 @@ export class MessageQ {
       console.log(
         this.dateTimeLogger() + " sending message to " + broadcastUrl
       );
+      const parsed = JSON.parse(message.data);
 
-      console.log("[POLTEST MSG]- ", JSON.parse(message.data.tx.msg));
-      console.log("[POLTEST DATA]- ", JSON.parse(message.data.tx.msg.data));
+      console.log("[POLTEST MSG]- ", parsed.tx.msg);
+      console.log("[POLTEST DATA]- ", parsed.tx.msg.data);
 
-      // const parsed = JSON.parse(message.data);
       // const rsp = await transactions.ServiceBroadcastTx(
       //   JsonToArray(parsed),
       //   BroadcastMode.BROADCAST_MODE_ASYNC
