@@ -5,9 +5,8 @@
   "repository": "https://github.com/ixofoundation/ixo-mq-poller",
   "main": "app.ts",
   "scripts": {
-    "start": "node dist/app.js",
-    "build": "tsc",
-    "test": "we are live"
+    "start": "tsc && node dist/app.js",
+    "build": "tsc"
   },
   "author": "",
   "license": "MIT",
