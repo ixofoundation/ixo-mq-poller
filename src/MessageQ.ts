@@ -2,6 +2,7 @@ import axios from "axios";
 import { BroadcastMode } from "./codec/external/cosmos/tx/v1beta1/service";
 import { Tx } from "./codec/external/cosmos/tx/v1beta1/tx";
 import * as transactions from "./protoquery/transactions";
+import * as projects from "./protoquery/projects";
 import { JsonToArray } from "./protoquery/utils";
 
 const amqplib = require("amqplib");
@@ -90,54 +91,71 @@ export class MessageQ {
   }
 
   private handleMessage(message: any): Promise<any> {
-    return new Promise((resolve: Function, reject: Function) => {
+    return new Promise(async (resolve: Function, reject: Function) => {
       console.log(
         this.dateTimeLogger() + " consume from queue " + JSON.stringify(message)
       );
-      if (message.msgType === "eth") {
-        console.log(this.dateTimeLogger() + " skipping eth message");
-      } else {
-        const broadcastUrl = BLOCKCHAIN_REST + "/txs";
-        console.log(
-          this.dateTimeLogger() + " sending message to " + broadcastUrl
-        );
-        console.log("[POLTEST]- ", JSON.parse(message.data));
-        const parsed = JSON.parse(message.data);
-        transactions
-          .ServiceBroadcastTx(
-            JsonToArray(parsed),
-            BroadcastMode.BROADCAST_MODE_ASYNC
-          )
-          .then((response) => {
-            console.log(response);
-          });
+      const broadcastUrl = BLOCKCHAIN_REST + "/txs";
+      console.log(
+        this.dateTimeLogger() + " sending message to " + broadcastUrl
+      );
 
-        // axios
-        //   .post(broadcastUrl, message.data)
-        //   .then((response: any) => {
-        //     if (response.data && response.data.error) {
-        //       console.log(
-        //         this.dateTimeLogger() +
-        //           " received error response from blockchain " +
-        //           JSON.stringify(response.data)
-        //       );
-        //       reject(response.data.error.data || "Unknown error");
-        //     } else {
-        //       console.log(
-        //         this.dateTimeLogger() +
-        //           " received response from blockchain " +
-        //           response.data.txhash
-        //       );
-        //       resolve(response.data);
-        //     }
-        //   })
-        //   .catch((reason) => {
-        //     console.log(
-        //       this.dateTimeLogger() + " no response from blockchain " + reason
-        //     );
-        //     reject(reason);
-        //   });
-      }
+      console.log("[POLTEST MSG]- ", JSON.parse(message.data.tx.msg));
+      console.log("[POLTEST DATA]- ", JSON.parse(message.data.tx.msg.data));
+
+      // const parsed = JSON.parse(message.data);
+      // const rsp = await transactions.ServiceBroadcastTx(
+      //   JsonToArray(parsed),
+      //   BroadcastMode.BROADCAST_MODE_ASYNC
+      // );
+
+      // switch (message.msgType) {
+      //   case "project/CreateProject":
+      //     {
+      //       const parsed = JSON.parse(message.data);
+      //       projects.TransactionCreateProject(
+      //         txHash,
+      //         senderDid,
+      //         projectDid,
+      //         pubKey,
+      //         parsed
+      //       );
+      //     }
+      //     break;
+      //   // case "project/CreateClaim":
+      //   //   {
+      //   //     projects.TransactionCreateProject();
+      //   //   }
+      //   //   break;
+      //   // case "project/CreateAgent":
+      //   //   {
+      //   //     projects.TransactionCreateProject();
+      //   //   }
+      //   //   break;
+      //   // case "project/CreateEvaluation":
+      //   //   {
+      //   //     projects.TransactionCreateProject();
+      //   //   }
+      //   //   break;
+      //   // case "project/UpdateAgent":
+      //   //   {
+      //   //     projects.TransactionCreateProject();
+      //   //   }
+      //   //   break;
+      //   // case "project/UpdateProjectDoc":
+      //   //   {
+      //   //     projects.TransactionCreateProject();
+      //   //   }
+      //   //   break;
+      //   // case "project/UpdateProjectStatus":
+      //   //   {
+      //   //     projects.TransactionCreateProject();
+      //   //   }
+      //   //   break;
+
+      //   default:
+      //     break;
+      // }
     });
   }
 }
