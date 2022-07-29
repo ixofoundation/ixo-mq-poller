@@ -93,16 +93,18 @@ export class MessageQ {
   private handleMessage(message: any): Promise<any> {
     interface messageData {
       tx: {
-        msg: {
-          type: string;
-          value: {
-            data: any;
-            txHash: string;
-            senderDid: string;
-            projectDid: string;
-            pubKey: string;
-          };
-        };
+        msg: [
+          {
+            type: string;
+            value: {
+              data: any;
+              txHash: string;
+              senderDid: string;
+              projectDid: string;
+              pubKey: string;
+            };
+          }
+        ];
       };
     }
     return new Promise(async (resolve: Function, reject: Function) => {
@@ -116,7 +118,7 @@ export class MessageQ {
       const parsed: messageData = JSON.parse(message.data);
 
       console.log("[POLTEST MSG]- ", parsed.tx.msg);
-      console.log("[POLTEST DATA]- ", JsonToArray(parsed.tx.msg.value.data));
+      console.log("[POLTEST DATA]- ", JsonToArray(parsed.tx.msg[0].value.data));
 
       // const rsp = await transactions.ServiceBroadcastTx(
       //   JsonToArray(parsed),
@@ -128,11 +130,11 @@ export class MessageQ {
           {
             projects
               .TransactionCreateProject(
-                parsed.tx.msg.value.txHash,
-                parsed.tx.msg.value.senderDid,
-                parsed.tx.msg.value.projectDid,
-                parsed.tx.msg.value.pubKey,
-                JsonToArray(parsed.tx.msg.value.data)
+                parsed.tx.msg[0].value.txHash,
+                parsed.tx.msg[0].value.senderDid,
+                parsed.tx.msg[0].value.projectDid,
+                parsed.tx.msg[0].value.pubKey,
+                JsonToArray(parsed.tx.msg[0].value.data)
               )
               .then((rsp) => {
                 console.log("[CREATE_PROJECT_RSP] ", rsp);
